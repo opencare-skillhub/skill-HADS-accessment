@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 环境配置（私密信息）
+.env
+*.env.local
+
+# 患者数据（隐私保护）
+results/json/*.json
+deployed/questionnaires/*.html
+
+# 日志文件（包含执行轨迹）
+logs/
+*.log
+
+# 设计与开发文档（内部迭代）
+design/
+开发计划.md
+skill_design.md
+自优化原则.md
+
+# 临时文件
+*.tmp
+*.swp
+*.bak
+.DS_Store
+
+# 发布包（自动生成）
+*.zip
+*.tar.gz
+
+# IDE配置
+.vscode/
+.idea/

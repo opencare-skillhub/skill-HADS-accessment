@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HADS 医院焦虑抑郁量表</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=2000&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            padding: 20px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.4);
+            z-index: -1;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(46, 125, 50, 0.1);
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2E7D32;
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .header h1 img {
+            width: 32px;
+            height: 32px;
+        }
+        .instruction {
+            background: #E8F5E9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #4CAF50;
+            color: #2E7D32;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .instruction img {
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+        }
+        .question {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #FAFAFA;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .question-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border: 2px solid #E0E0E0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .option:hover {
+            border-color: #4CAF50;
+            background: #F1F8E9;
+        }
+        .option input[type="radio"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-radius: 12px;
+        }
+        .result.show { display: block; }
+        .score-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .score-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .score-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2E7D32;
+        }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .action-btn {
+            padding: 12px;
+            border: 2px solid #4CAF50;
+            background: white;
+            color: #2E7D32;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: #F1F8E9;
+            transform: translateY(-2px);
+        }
+        .action-btn img {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="content">
+        <div class="header">
+            <h1><img src="https://img.icons8.com/?id=2070&format=png&size=48" alt="brain"> HADS 医院焦虑抑郁量表</h1>
+            <p>患者ID: <span id="patient-id">未指定</span> | 日期: <span id="date"></span></p>
+        </div>
+
+        <div class="instruction">
+            <img src="https://img.icons8.com/?id=11698&format=png&size=48" alt="clipboard">
+            <div>
+                <strong>📋 填写说明：</strong><br>
+                请根据您<strong>最近一周</strong>的真实感受选择最符合的选项。
+            </div>
+        </div>
+
+        <form id="hads-form">
+            <!-- 焦虑题 (奇数题) -->
+            <div class="question">
+                <div class="question-text">1. 我感到紧张或害怕</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q1" value="3" required> 几乎总是</label>
+                    <label class="option"><input type="radio" name="q1" value="2"> 大部分时间</label>
+                    <label class="option"><input type="radio" name="q1" value="1"> 有时</label>
+                    <label class="option"><input type="radio" name="q1" value="0"> 完全不是</label>
+                </div>
+            </div>
+
+            <!-- 抑郁题 -->
+            <div class="question">
+                <div class="question-text">2. 我仍然能享受以前喜欢的事情</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q2" value="0" required> 和以前一样</label>
+                    <label class="option"><input type="radio" name="q2" value="1"> 不如以前</label>
+                    <label class="option"><input type="radio" name="q2" value="2"> 只有一点点</label>
+                    <label class="option"><input type="radio" name="q2" value="3"> 完全没有</label>
+                </div>
+            </div>
+
+            <!-- 焦虑题 -->
+            <div class="question">
+                <div class="question-text">3. 我有一种害怕的感觉，好像某种可怕的事即将发生</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q3" value="3" required> 非常强烈</label>
+                    <label class="option"><input type="radio" name="q3" value="2"> 较强烈，但不太严重</label>
+                    <label class="option"><input type="radio" name="q3" value="1"> 有一些，但不令我担忧</label>
+                    <label class="option"><input type="radio" name="q3" value="0"> 完全没有</label>
+                </div>
+            </div>
+
+            <!-- 抑郁题 -->
+            <div class="question">
+                <div class="question-text">4. 我能笑并看到事物有趣的一面</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q4" value="0" required> 和以前一样</label>
+                    <label class="option"><input type="radio" name="q4" value="1"> 不如以前</label>
+                    <label class="option"><input type="radio" name="q4" value="2"> 明显不如以前</label>
+                    <label class="option"><input type="radio" name="q4" value="3"> 完全不能</label>
+                </div>
+            </div>
+
+            <!-- 焦虑题 -->
+            <div class="question">
+                <div class="question-text">5. 我脑子里总有一些令我担忧的想法</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q5" value="3" required> 总是如此</label>
+                    <label class="option"><input type="radio" name="q5" value="2"> 大部分时候</label>
+                    <label class="option"><input type="radio" name="q5" value="1"> 时常如此</label>
+                    <label class="option"><input type="radio" name="q5" value="0"> 偶尔如此</label>
+                </div>
+            </div>
+
+            <!-- 抑郁题 -->
+            <div class="question">
+                <div class="question-text">6. 我感到愉快</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q6" value="3" required> 从来没有</label>
+                    <label class="option"><input type="radio" name="q6" value="2"> 不经常</label>
+                    <label class="option"><input type="radio" name="q6" value="1"> 有时</label>
+                    <label class="option"><input type="radio" name="q6" value="0"> 大部分时候</label>
+                </div>
+            </div>
+
+            <!-- 焦虑题 -->
+            <div class="question">
+                <div class="question-text">7. 我能舒适地坐着并感到放松</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q7" value="0" required> 确实如此</label>
+                    <label class="option"><input type="radio" name="q7" value="1"> 经常如此</label>
+                    <label class="option"><input type="radio" name="q7" value="2"> 不经常如此</label>
+                    <label class="option"><input type="radio" name="q7" value="3"> 完全不能</label>
+                </div>
+            </div>
+
+            <!-- 抑郁题 -->
+            <div class="question">
+                <div class="question-text">8. 我感到行动迟缓</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q8" value="3" required> 几乎总是</label>
+                    <label class="option"><input type="radio" name="q8" value="2"> 经常</label>
+                    <label class="option"><input type="radio" name="q8" value="1"> 有时</label>
+                    <label class="option"><input type="radio" name="q8" value="0"> 完全不是</label>
+                </div>
+            </div>
+
+            <!-- 焦虑题 -->
+            <div class="question">
+                <div class="question-text">9. 我有一种好像胃里发慌、不舒服的紧张感</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q9" value="0" required> 从来没有</label>
+                    <label class="option"><input type="radio" name="q9" value="1"> 偶尔</label>
+                    <label class="option"><input type="radio" name="q9" value="2"> 相当常见</label>
+                    <label class="option"><input type="radio" name="q9" value="3"> 经常如此</label>
+                </div>
+            </div>
+
+            <!-- 抑郁题 -->
+            <div class="question">
+                <div class="question-text">10. 我对自己的外表不再关心</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q10" value="3" required> 确实如此</label>
+                    <label class="option"><input type="radio" name="q10" value="2"> 不太关心</label>
+                    <label class="option"><input type="radio" name="q10" value="1"> 应该关心更多</label>
+                    <label class="option"><input type="radio" name="q10" value="0"> 和以前一样关心</label>
+                </div>
+            </div>
+
+            <!-- 焦虑题 -->
+            <div class="question">
+                <div class="question-text">11. 我感到坐立不安，总想动来动去</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q11" value="3" required> 确实如此</label>
+                    <label class="option"><input type="radio" name="q11" value="2"> 相当如此</label>
+                    <label class="option"><input type="radio" name="q11" value="1"> 不太多</label>
+                    <label class="option"><input type="radio" name="q11" value="0"> 完全不是</label>
+                </div>
+            </div>
+
+            <!-- 抑郁题 -->
+            <div class="question">
+                <div class="question-text">12. 我期待着做各种事情</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q12" value="0" required> 和以前一样</label>
+                    <label class="option"><input type="radio" name="q12" value="1"> 比以前少一些</label>
+                    <label class="option"><input type="radio" name="q12" value="2"> 比以前少得多</label>
+                    <label class="option"><input type="radio" name="q12" value="3"> 几乎没有</label>
+                </div>
+            </div>
+
+            <!-- 焦虑题 -->
+            <div class="question">
+                <div class="question-text">13. 我突然感到惊恐</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q13" value="3" required> 非常常见</label>
+                    <label class="option"><input type="radio" name="q13" value="2"> 相当常见</label>
+                    <label class="option"><input type="radio" name="q13" value="1"> 不太常见</label>
+                    <label class="option"><input type="radio" name="q13" value="0"> 完全不是</label>
+                </div>
+            </div>
+
+            <!-- 抑郁题 -->
+            <div class="question">
+                <div class="question-text">14. 我能享受一本好书、广播或电视节目</div>
+                <div class="options">
+                    <label class="option"><input type="radio" name="q14" value="0" required> 经常如此</label>
+                    <label class="option"><input type="radio" name="q14" value="1"> 有时如此</label>
+                    <label class="option"><input type="radio" name="q14" value="2"> 不太常见</label>
+                    <label class="option"><input type="radio" name="q14" value="3"> 很少如此</label>
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-btn">提交评估</button>
+        </form>
+
+        <div class="result" id="result">
+            <h2><img src="https://img.icons8.com/?id=3005&format=png&size=48" alt="chart"> 评估结果</h2>
+            <div class="score-box">
+                <div class="score-item">
+                    <div>焦虑评分 (HADS-A)</div>
+                    <div class="score-value" id="anxiety-score">0</div>
+                    <div id="anxiety-level" style="font-size: 14px; color: #666; margin-top: 10px;"></div>
+                </div>
+                <div class="score-item">
+                    <div>抑郁评分 (HADS-D)</div>
+                    <div class="score-value" id="depression-score">0</div>
+                    <div id="depression-level" style="font-size: 14px; color: #666; margin-top: 10px;"></div>
+                </div>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <strong>评分说明：</strong><br>
+                0-7分：正常 | 8-10分：边缘异常 | 11-21分：异常
+            </div>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="takeScreenshot()">
+                    <img src="https://img.icons8.com/?id=5376&format=png&size=48" alt="camera"> 截图
+                </button>
+                <button class="action-btn" onclick="downloadPDF()">
+                    <img src="https://img.icons8.com/?id=36925&format=png&size=48" alt="pdf"> PDF
+                </button>
+                <button class="action-btn" onclick="downloadJSON()">
+                    <img src="https://img.icons8.com/?id=366&format=png&size=48" alt="download"> 下载JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const patientId = urlParams.get('patient_id') || '未指定';
+        document.getElementById('patient-id').textContent = patientId;
+        document.getElementById('date').textContent = new Date().toLocaleDateString('zh-CN');
+
+        document.getElementById('hads-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 焦虑题: 1, 3, 5, 7, 9, 11, 13
+            const anxietyQuestions = [1, 3, 5, 7, 9, 11, 13];
+            // 抑郁题: 2, 4, 6, 8, 10, 12, 14
+            const depressionQuestions = [2, 4, 6, 8, 10, 12, 14];
+            
+            let anxietyScore = 0;
+            let depressionScore = 0;
+            
+            anxietyQuestions.forEach(q => {
+                const value = document.querySelector(`input[name="q${q}"]:checked`);
+                if (value) anxietyScore += parseInt(value.value);
+            });
+            
+            depressionQuestions.forEach(q => {
+                const value = document.querySelector(`input[name="q${q}"]:checked`);
+                if (value) depressionScore += parseInt(value.value);
+            });
+            
+            document.getElementById('anxiety-score').textContent = anxietyScore;
+            document.getElementById('depression-score').textContent = depressionScore;
+            
+            // 解释评分
+            const anxietyLevel = anxietyScore <= 7 ? '正常' : (anxietyScore <= 10 ? '边缘异常' : '异常');
+            const depressionLevel = depressionScore <= 7 ? '正常' : (depressionScore <= 10 ? '边缘异常' : '异常');
+            
+            document.getElementById('anxiety-level').textContent = anxietyLevel;
+            document.getElementById('depression-level').textContent = depressionLevel;
+            
+            document.getElementById('result').classList.add('show');
+            this.style.display = 'none';
+            
+            window.hadsResult = {
+                skill: 'hads-assessment',
+                version: '1.0.0',
+                patient_id: patientId,
+                assessment_date: new Date().toISOString(),
+                hads: {
+                    anxiety: anxietyScore,
+                    depression: depressionScore
+                },
+                interpretation: {
+                    anxiety_level: anxietyLevel,
+                    depression_level: depressionLevel,
+                    overall_risk: (anxietyScore >= 11 || depressionScore >= 11) ? 'high' : ((anxietyScore >= 8 || depressionScore >= 8) ? 'medium' : 'low')
+                },
+                answers: {
+                    anxiety_items: anxietyQuestions.map(q => ({
+                        question: q,
+                        score: parseInt(document.querySelector(`input[name="q${q}"]:checked`).value)
+                    })),
+                    depression_items: depressionQuestions.map(q => ({
+                        question: q,
+                        score: parseInt(document.querySelector(`input[name="q${q}"]:checked`).value)
+                    }))
+                }
+            };
+        });
+
+        function takeScreenshot() {
+            html2canvas(document.getElementById('content')).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `hads_${patientId}_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            html2canvas(document.getElementById('content')).then(canvas => {
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, 210, canvas.height * 210 / canvas.width);
+                pdf.save(`hads_report_${patientId}.pdf`);
+            });
+        }
+
+        function downloadJSON() {
+            const jsonStr = JSON.stringify(window.hadsResult, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `hads_result_${patientId}_${new Date().toISOString().slice(0,10)}.json`;
+            link.click();
+        }
+
+        function copyJSON() {
+            navigator.clipboard.writeText(JSON.stringify(window.hadsResult, null, 2)).then(() => {
+                alert('✅ JSON已复制！可直接粘贴到患者数据文件');
+            });
+        }
+    </script>
+</body>
+</html>

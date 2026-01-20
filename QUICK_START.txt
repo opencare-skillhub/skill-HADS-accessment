@@ -1,0 +1,137 @@
+╔═══════════════════════════════════════════════════════════════╗
+║         HADS 心理量表评估助手 - 快速使用指南                  ║
+╚═══════════════════════════════════════════════════════════════╝
+
+📦 项目位置
+  ~/.claude/skills/skill-hads-assessment
+  
+✅ 已完成设置
+  ✓ 目录结构创建完成
+  ✓ Python 模块已配置
+  ✓ HTML 问卷模板已就绪
+  ✓ MCP 配置已完成
+  ✓ 与 skill-report-genie 集成完成
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 使用流程
+
+【步骤 1】生成问卷
+cd ~/.claude/skills/skill-hads-assessment
+python src/publisher.py --patient-id P001
+
+输出：
+  ✓ 问卷已生成: deployed/questionnaires/hads_P001_xxx.html
+  ✓ 下一步提示
+
+【步骤 2】发布到公网（在 AI 对话中）
+用 EdgeOne MCP 发布 deployed/questionnaires/hads_P001_xxx.html
+
+输出：
+  ✓ 公网链接: https://mcp.edgeone.site/share/xxxxx?patient_id=P001
+
+【步骤 3】患者填写
+  ✓ 患者通过链接访问问卷
+  ✓ 填写 14 题（5-10 分钟）
+  ✓ 提交后查看结果
+  ✓ 下载 JSON 文件（hads_result_P001.json）
+
+【步骤 4】结果分析（可选）
+python src/result_parser.py results/json/hads_result_P001.json
+
+输出：
+  ✓ 详细的评估报告
+  ✓ 焦虑/抑郁评分
+  ✓ 个性化建议
+
+【步骤 5】整合到病情报告
+cp results/json/hads_result_P001.json \
+   ~/skill-report-genie/patient_data/P001/
+
+cd ~/skill-report-genie
+python process_single.py --patient-id P001
+
+输出：
+  ✓ 检测到心理评估数据 (HADS)
+  ✓ 已整合到综合病情报告
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📂 关键文件说明
+
+src/publisher.py           - 问卷生成器
+src/result_parser.py       - 结果解析器
+src/validator.py           - 数据验证器
+templates/hads_questionnaire.html  - HTML 问卷模板
+SKILL.md                   - 完整使用文档
+mcp.json                   - MCP 配置
+
+deployed/questionnaires/   - 已生成问卷存放
+results/json/              - 评估结果 JSON
+results/pdf/               - 评估报告 PDF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 与 skill-report-genie 集成
+
+skill-report-genie 已新增以下功能：
+
+1. 心理评估数据提取器
+   src/file_handler/psychological_extractor.py
+   - 自动识别 HADS JSON/PDF 文件
+   - 提取焦虑/抑郁评分
+   - 验证数据完整性
+
+2. 文档分类器增强
+   src/file_handler/content_classifier.py
+   - 新增 _is_hads_assessment() 方法
+   - 自动识别 HADS 评估文件
+   - 置信度: 99%
+
+识别规则：
+  ✓ 文件名包含 "hads" 或 "心理"
+  ✓ JSON 包含 {"hads": {"anxiety": ..., "depression": ...}}
+  ✓ 评分范围 0-21
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ 测试验证
+
+已通过测试：
+  ✓ 问卷生成: python src/publisher.py --patient-id P001
+  ✓ 结果解析: python src/result_parser.py results/json/hads_result_P001_test.json
+  ✓ 数据提取: PsychologicalExtractor.extract_from_file()
+  ✓ 文档分类: ContentClassifier.classify() → PSYCHOLOGY (99%)
+  ✓ 数据验证: HADSValidator.validate_hads_data() → 通过
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 最佳实践
+
+1. 文件命名规范
+   - 问卷: hads_P001_20260120_143000.html
+   - JSON: hads_result_P001_20260120.json
+   - PDF: hads_report_P001_20260120.pdf
+
+2. 数据存储位置
+   - skill-hads-assessment/results/json/  - 原始评估结果
+   - skill-report-genie/patient_data/P001/ - 病情整合目录
+
+3. 安全建议
+   - 问卷链接不要包含患者真实姓名
+   - 通过 URL 参数传递 patient_id
+   - 定期备份评估结果
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📞 技术支持
+
+问题排查：
+  - 问卷无法生成 → 检查模板文件是否存在
+  - MCP 发布失败 → 检查 mcp.json 配置
+  - 数据识别失败 → 验证 JSON 格式和评分范围
+
+相关文档：
+  - SKILL.md - 完整功能说明
+  - ~/skill-report-genie/docs/guides/PSYCHOLOGICAL_SCALE_GUIDE.md
+

@@ -1,0 +1,11 @@
+# HADS 心理量表评估助手
+# 本项目主要依赖前端 HTML，Python 依赖极少
+
+# 数据处理（已内置）
+# json - Python 标准库
+# os - Python 标准库
+# datetime - Python 标准库
+
+# 可选：二维码生成
+qrcode==7.4.2
+pillow==10.1.0

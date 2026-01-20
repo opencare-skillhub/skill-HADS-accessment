@@ -1,0 +1,68 @@
+# node-skills.yaml
+# HADS 心理评估 Skill 节点定义与编排
+
+nodes:
+  # --- 核心主节点 (Master Node) ---
+  # 对应 SKILL.md 定义的完整业务逻辑
+  hads_assessment_master:
+    type: flow_master
+    description: "协调 HADS 问卷发布、结果解析及自优化闭环的总体流程"
+    next:
+      - call: hads_publisher
+        map_input: { patient_id: "{{input.patient_id}}" }
+
+  # --- 子节点 1: 问卷发布 (Publisher) ---
+  hads_publisher:
+    type: python_skill
+    cwd: ~/.claude/skills/skill-hads-assessment
+    entrypoint:
+      command: python
+      args: ["src/publisher.py", "--patient-id", "{{input.patient_id}}"]
+    output_schema:
+      type: object
+      properties:
+        questionnaire_html: { type: string }
+    # 发布后等待患者填写，逻辑上由 Agent 或系统触发下一步解析
+    next:
+      - call: hads_result_parser
+        map_input: { patient_id: "{{input.patient_id}}" }
+
+  # --- 子节点 2: 结果解析与智能解读 (Parser & Interpreter) ---
+  # 此节点集成了 Interpretation Agent 的提示词生成能力
+  hads_result_parser:
+    type: python_skill
+    cwd: ~/.claude/skills/skill-hads-assessment
+    entrypoint:
+      command: python
+      args: ["src/result_parser.py", "results/json/hads_result_{{input.patient_id}}.json"]
+    output_schema:
+      type: object
+      properties:
+        anxiety_score: { type: integer }
+        depression_score: { type: integer }
+        llm_prompt: { type: string }  # Interpretation Agent 生成的深度解读指令
+    next:
+      - call: hads_self_optimizer
+        map_input: {}
+
+  # --- 子节点 3: 自优化反思 (Self-Optimization) ---
+  # 此节点集成了 Reflection Agent 对四级日志的分析能力
+  hads_self_optimizer:
+    type: python_skill
+    cwd: ~/.claude/skills/skill-hads-assessment
+    entrypoint:
+      command: python
+      args: ["src/optimizer.py"]
+    output_schema:
+      type: object
+      properties:
+        suggested_changes: { type: array }
+        needs_human_approval: { type: boolean }
+
+flows:
+  # HADS 评估完整生命周期流
+  - name: hads_complete_assessment_lifecycle
+    entry: hads_assessment_master
+    description: >
+      从发布针对特定患者的 HADS 问卷开始，采集数据后进行自动化计分与智能临床解读建议生成，
+      最终通过分析执行日志输出系统优化提案，完成受控的自进化闭环。

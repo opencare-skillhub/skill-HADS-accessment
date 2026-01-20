@@ -59,6 +59,25 @@ nodes:
         suggested_changes: { type: array }
         needs_human_approval: { type: boolean }
 
+  # --- 子节点 4: 内容生成器 (Content Generator) ---
+  # 为患者生成主题化的静态 HTML 康复指导页面（如正念、营养、运动）
+  # 集成 Bilibili 精选视频，采用治愈系 UI 设计
+  hads_content_generator:
+    type: python_skill
+    cwd: ~/.claude/skills/skill-hads-assessment
+    entrypoint:
+      command: python
+      args: ["src/content_generator.py", "--theme", "{{input.theme}}", "--patient-id", "{{input.patient_id}}", "--output-prompt-only"]
+    output_schema:
+      type: object
+      properties:
+        llm_prompt: { type: string }  # 用于 LLM 生成 HTML 的完整提示词
+        theme: { type: string }
+    description: >
+      生成用于 LLM 的 HTML 提示词，指导生成包含精选视频的治愈系静态页面。
+      实际 HTML 生成需要调用支持 Web 搜索的 LLM（如 Claude + MCP），
+      生成后可通过 EdgeOne MCP 发布到公网供患者访问。
+
 flows:
   # HADS 评估完整生命周期流
   - name: hads_complete_assessment_lifecycle
